@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.bookSys.mapper.BooksMapper">
+    
+    <resultMap type="Books" id="BooksResult">
+        <result property="bookId"    column="book_id"    />
+        <result property="title"    column="title"    />
+        <result property="author"    column="author"    />
+        <result property="publishDate"    column="publish_date"    />
+        <result property="isbn"    column="isbn"    />
+        <result property="available"    column="available"    />
+    </resultMap>
+
+    <resultMap id="BooksLoanRecordsResult" type="Books" extends="BooksResult">
+        <collection property="loanRecordsList" ofType="LoanRecords" column="book_id" select="selectLoanRecordsList" />
+    </resultMap>
+
+    <resultMap type="LoanRecords" id="LoanRecordsResult">
+        <result property="recordId"    column="record_id"    />
+        <result property="bookId"    column="book_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="loanDate"    column="loan_date"    />
+        <result property="dueDate"    column="due_date"    />
+        <result property="returned"    column="returned"    />
+    </resultMap>
+
+    <sql id="selectBooksVo">
+        select book_id, title, author, publish_date, isbn, available from books
+    </sql>
+
+    <select id="selectBooksList" parameterType="Books" resultMap="BooksResult">
+        <include refid="selectBooksVo"/>
+        <where>  
+            <if test="title != null  and title != ''"> and title like concat('%', #{title}, '%')</if>
+            <if test="author != null  and author != ''"> and author = #{author}</if>
+        </where>
+    </select>
+    
+    <select id="selectBooksByBookId" parameterType="Long" resultMap="BooksLoanRecordsResult">
+        select book_id, title, author, publish_date, isbn, available
+        from books
+        where book_id = #{bookId}
+    </select>
+
+    <select id="selectLoanRecordsList" resultMap="LoanRecordsResult">
+        select record_id, book_id, user_id, loan_date, due_date, returned
+        from loan_records
+        where record_id = #{record_id}
+    </select>
+
+    <insert id="insertBooks" parameterType="Books" useGeneratedKeys="true" keyProperty="bookId">
+        insert into books
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null and title != ''">title,</if>
+            <if test="author != null and author != ''">author,</if>
+            <if test="publishDate != null">publish_date,</if>
+            <if test="isbn != null">isbn,</if>
+            <if test="available != null">available,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="author != null and author != ''">#{author},</if>
+            <if test="publishDate != null">#{publishDate},</if>
+            <if test="isbn != null">#{isbn},</if>
+            <if test="available != null">#{available},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBooks" parameterType="Books">
+        update books
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="author != null and author != ''">author = #{author},</if>
+            <if test="publishDate != null">publish_date = #{publishDate},</if>
+            <if test="isbn != null">isbn = #{isbn},</if>
+            <if test="available != null">available = #{available},</if>
+        </trim>
+        where book_id = #{bookId}
+    </update>
+
+    <delete id="deleteBooksByBookId" parameterType="Long">
+        delete from books where book_id = #{bookId}
+    </delete>
+
+    <delete id="deleteBooksByBookIds" parameterType="String">
+        delete from books where book_id in 
+        <foreach item="bookId" collection="array" open="(" separator="," close=")">
+            #{bookId}
+        </foreach>
+    </delete>
+    
+    <delete id="deleteLoanRecordsByRecordIds" parameterType="String">
+        delete from loan_records where record_id in 
+        <foreach item="recordId" collection="array" open="(" separator="," close=")">
+            #{recordId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteLoanRecordsByRecordId" parameterType="Long">
+        delete from loan_records where record_id = #{recordId}
+    </delete>
+
+    <insert id="batchLoanRecords">
+        insert into loan_records( record_id, book_id, user_id, loan_date, due_date, returned) values
+        <foreach item="item" index="index" collection="list" separator=",">
+            ( #{item.recordId}, #{item.bookId}, #{item.userId}, #{item.loanDate}, #{item.dueDate}, #{item.returned})
+        </foreach>
+    </insert>
+</mapper>

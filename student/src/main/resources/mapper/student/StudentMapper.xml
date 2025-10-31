@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.student.mapper.StudentMapper">
+    
+    <resultMap type="Student" id="StudentResult">
+        <result property="sId"    column="student_id"    />
+        <result property="sName"    column="student_name"    />
+        <result property="sClass"    column="student_class"    />
+        <result property="sSchool"    column="student_school"    />
+        <result property="sNum"    column="student_num"    />
+        <result property="sEmail"    column="student_email"    />
+    </resultMap>
+
+    <sql id="selectStudentVo">
+        select student_id, student_name, student_class, student_school, student_num, student_email from student
+    </sql>
+
+    <select id="selectStudentList" parameterType="Student" resultMap="StudentResult">
+        <include refid="selectStudentVo"/>
+        <where>  
+            <if test="sName != null  and sName != ''"> and student_name like concat('%', #{sName}, '%')</if>
+            <if test="sEmail != null  and sEmail != ''"> and student_email like concat('%', #{sEmail}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectStudentBySId" parameterType="Long" resultMap="StudentResult">
+        <include refid="selectStudentVo"/>
+        where student_id = #{sId}
+    </select>
+
+    <insert id="insertStudent" parameterType="Student" useGeneratedKeys="true" keyProperty="sId">
+        insert into student
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="sName != null and sName != ''">student_name,</if>
+            <if test="sClass != null">student_class,</if>
+            <if test="sSchool != null">student_school,</if>
+            <if test="sNum != null">student_num,</if>
+            <if test="sEmail != null">student_email,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="sName != null and sName != ''">#{sName},</if>
+            <if test="sClass != null">#{sClass},</if>
+            <if test="sSchool != null">#{sSchool},</if>
+            <if test="sNum != null">#{sNum},</if>
+            <if test="sEmail != null">#{sEmail},</if>
+         </trim>
+    </insert>
+
+    <update id="updateStudent" parameterType="Student">
+        update student
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="sName != null and sName != ''">student_name = #{sName},</if>
+            <if test="sClass != null">student_class = #{sClass},</if>
+            <if test="sSchool != null">student_school = #{sSchool},</if>
+            <if test="sNum != null">student_num = #{sNum},</if>
+            <if test="sEmail != null">student_email = #{sEmail},</if>
+        </trim>
+        where student_id = #{sId}
+    </update>
+
+    <delete id="deleteStudentBySId" parameterType="Long">
+        delete from student where student_id = #{sId}
+    </delete>
+
+    <delete id="deleteStudentBySIds" parameterType="String">
+        delete from student where student_id in 
+        <foreach item="sId" collection="array" open="(" separator="," close=")">
+            #{sId}
+        </foreach>
+    </delete>
+</mapper>
